@@ -54,6 +54,20 @@ function initializeServiceWorker() {
   // B5. TODO - In the event that the service worker registration fails, console
   //            log that it has failed.
   // STEPS B6 ONWARDS WILL BE IN /sw.js
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener('load', async (event)=>{
+      try{
+
+        const registration = await navigator.serviceWorker.register("sw.js");
+        console.log("Service worker successfully registered");
+
+      }catch(err){
+        console.error(`Registration failed with ${err}`);
+      }
+
+    })
+  }
 }
 
 /**
@@ -68,6 +82,11 @@ async function getRecipes() {
   // EXPOSE - START (All expose numbers start with A)
   // A1. TODO - Check local storage to see if there are any recipes.
   //            If there are recipes, return them.
+
+  let recipes = JSON.parse(localStorage.getItem('recipes'));
+  if (recipes != null) return recipes;
+  
+
   /**************************/
   // The rest of this method will be concerned with requesting the recipes
   // from the network
@@ -78,6 +97,8 @@ async function getRecipes() {
   //            take two parameters - resolve, and reject. These are functions
   //            you can call to either resolve the Promise or Reject it.
   /**************************/
+
+
   // A4-A11 will all be *inside* the callback function we passed to the Promise
   // we're returning
   /**************************/
@@ -100,6 +121,23 @@ async function getRecipes() {
   //            resolve() method.
   // A10. TODO - Log any errors from catch using console.error
   // A11. TODO - Pass any errors to the Promise's reject() function
+  recipes = [];
+  return new Promise(async (resolve, reject)=>{
+    try{
+      for (const URL of RECIPE_URLS){
+        let fetchRes = await fetch(URL);
+        let jsonObj = await (fetchRes).json()
+        recipes.push(jsonObj)
+      }
+      saveRecipesToStorage(recipes);
+      resolve(recipes);
+      }
+      catch (error){
+        console.error(error);
+        reject(error);
+      }
+
+  });
 }
 
 /**
